@@ -1,6 +1,3 @@
-Here’s a drop-in `README.md` for your repo, structured to match your attached template and tailored to your repository layout (`deployment/`, `educational_research/`, `eval/`, `tests/`, `pyproject.toml`, `uv.lock`). This README follows your template. 
-
----
 
 # Educational Research
 
