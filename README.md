@@ -81,92 +81,77 @@ gcloud auth application-default set-quota-project $GOOGLE_CLOUD_PROJECT
 
 ---
 
-## Running the Agent (Local)
+## Local Web Testing with ADK (`adk web`)
 
-**CLI / module entry**
+The quickest way to try the agent end-to-end is with the ADK web playground.
 
-If your package exposes a module entrypoint:
-
-```bash
-python -m educational_research --help
-```
-
-Common patterns:
+### 1) Install the CLI
 
 ```bash
-# Example: run the agent with a local PDF
-python -m educational_research --paper path/to/seminal.pdf
+# Prefer pipx (isolated)
+pipx install adk
 
-# Example: run with a DOI/URL
-python -m educational_research --doi 10.48550/arXiv.1706.03762
-# or
-python -m educational_research --url https://arxiv.org/abs/1706.03762
+# or with pip (inside your virtualenv)
+pip install adk
 ```
 
-**Web interface (if included in the project):**
-
-If your project provides a simple web UI script (e.g., `eval/web.py`), run:
+> Check it’s installed:
 
 ```bash
-uv run python eval/web.py
+adk --version
 ```
 
-> Adjust the command to whatever UI runner your repo includes. If not available, you can skip this section.
+### 2) Environment & auth (local)
 
-### Example prompts to try
+Create/populate `.env` as usual (see Setup). For **local** testing, you typically don’t need Vertex; if you do, keep the same Google auth steps from the deployment section.
 
-```
-Who are you?
-Analyze this paper (attached PDF) and summarize the core contributions.
-Find recent papers citing it and propose 3 future research directions.
-```
+* Local only (no Vertex): set `GOOGLE_GENAI_USE_VERTEXAI=false` (or leave unset).
+* If using Vertex-backed tools locally, make sure you’ve run:
 
----
+  ```bash
+  gcloud auth application-default login
+  gcloud auth application-default set-quota-project $GOOGLE_CLOUD_PROJECT
+  ```
 
-## Debugging Locally (macOS-focused)
+### 3) Start the playground
 
-Create `.vscode/launch.json`:
+From the project root:
 
-```json
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Module: educational_research",
-      "type": "python",
-      "request": "launch",
-      "module": "educational_research",
-      "justMyCode": true,
-      "envFile": "${workspaceFolder}/.env",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Script: eval/run_experiment.py",
-      "type": "python",
-      "request": "launch",
-      "program": "${workspaceFolder}/eval/run_experiment.py",
-      "args": [],
-      "justMyCode": true,
-      "envFile": "${workspaceFolder}/.env",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Pytest current file",
-      "type": "python",
-      "request": "launch",
-      "module": "pytest",
-      "args": ["-q", "${file}"],
-      "envFile": "${workspaceFolder}/.env",
-      "console": "integratedTerminal"
-    }
-  ]
-}
+```bash
+# If your project has an ADK manifest (e.g., adk.yaml) in the root:
+adk web
+
+# If your manifest or entry is elsewhere, point to it explicitly, for example:
+adk web --entry deployment/adk_app.py
+
+# Optional flags
+adk web --port 5173              # default is usually fine
+adk web --host 0.0.0.0           # bind for LAN access
+adk web --log-level INFO         # DEBUG for deeper troubleshooting
 ```
 
-Tips:
+This will launch a local UI at something like:
 
-* Set breakpoints in `educational_research/` files.
-* Use the “Pytest current file” configuration to debug tests.
+```
+http://localhost:5173
+```
+
+Use the UI to:
+
+* Provide a PDF/DOI/URL of a seminal paper,
+* Ask the agent to summarize, find recent citing works, and propose research directions.
+
+### 4) Troubleshooting
+
+* **“No manifest/entry found”**: pass `--entry` to the agent’s Python entry (e.g., an `app.py` that builds/starts the agent) or place an `adk.yaml` in the repo root.
+* **Import errors**: ensure the virtualenv is active and the package is installed in editable mode:
+
+  ```bash
+  source .venv/bin/activate
+  uv pip install -e .
+  ```
+* **Credential/permission errors (Vertex)**: verify `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, and that `gcloud auth application-default login` succeeded.
+* **Port in use**: pick another port, e.g., `adk web --port 5174`.
 
 ---
 
