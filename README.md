@@ -1,4 +1,3 @@
-
 # Educational Research
 
 ## Overview
